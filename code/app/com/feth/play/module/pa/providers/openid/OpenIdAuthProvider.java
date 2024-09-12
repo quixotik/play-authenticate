@@ -11,8 +11,8 @@ import play.api.libs.openid.OpenIDError;
 import play.inject.ApplicationLifecycle;
 import play.libs.openid.OpenIdClient;
 import play.libs.openid.UserInfo;
-import play.mvc.Http.Context;
-import play.mvc.Http.Request;
+import play.mvc.Http;
+import play.mvc.Result;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,10 +49,8 @@ public class OpenIdAuthProvider extends ExternalAuthProvider {
 	}
 
 	@Override
-	public Object authenticate(final Context context, final Object payload)
+	public Object authenticate(final Http.Request request, final Object payload)
 			throws AuthException {
-
-		final Request request = context.request();
 
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("Returned with URL: '" + request.uri() + "'");
@@ -63,7 +61,7 @@ public class OpenIdAuthProvider extends ExternalAuthProvider {
 
 		if (!hasOpenID) {
             try {
-                final Future<UserInfo> pu = openIdClient.verifiedId().toCompletableFuture();
+                final Future<UserInfo> pu = openIdClient.verifiedId(request).toCompletableFuture();
                 return new OpenIdAuthUser(pu.get(getTimeout(), MILLISECONDS));
             } catch (final Throwable t) {
                 if (t instanceof OpenIDError) {
@@ -87,7 +85,7 @@ public class OpenIdAuthProvider extends ExternalAuthProvider {
 
 			try {
 				final Future<String> pr = openIdClient.redirectURL(
-						payload.toString(), getRedirectUrl(context.request()),
+						payload.toString(), getRedirectUrl(request),
 						required, optional).toCompletableFuture();
 
 				return pr.get(getTimeout(), MILLISECONDS);

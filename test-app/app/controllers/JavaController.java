@@ -5,6 +5,7 @@ import com.feth.play.module.pa.user.AuthUser;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.Security;
+import play.mvc.Http;
 
 import javax.inject.Inject;
 
@@ -20,8 +21,8 @@ public class JavaController extends Controller {
 	}
 
 	@Security.Authenticated(JavaSecured.class)
-	public Result index() {
-		AuthUser user = this.auth.getUser(ctx());
+	public Result index(Http.Request request) {
+		AuthUser user = this.auth.getUser(request);
 		return ok(user.getProvider() + ": " + user.getId());
 	}
 

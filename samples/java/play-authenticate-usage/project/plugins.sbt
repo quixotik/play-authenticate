@@ -2,10 +2,10 @@
 logLevel := Level.Warn
 
 // The Typesafe repository
-resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % Option(System.getProperty("play.version")).getOrElse("2.6.17"))
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % Option(System.getProperty("play.version")).getOrElse("2.8.21"))
 
 addSbtPlugin("com.typesafe.sbt" %% "sbt-play-ebean" % "4.0.6")
 
@@ -23,4 +23,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-play-enhancer" % "1.2.2")
 // this is helpful plugin for figuring out dependencies
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.0")
 
-addSbtPlugin("com.heroku" % "sbt-heroku" % "1.0.1")
+//addSbtPlugin("com.heroku" % "sbt-heroku" % "1.0.1")

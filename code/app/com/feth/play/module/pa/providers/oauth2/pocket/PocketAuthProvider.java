@@ -16,7 +16,7 @@ import play.i18n.MessagesApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
-import play.mvc.Http.Request;
+import play.mvc.Http;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -93,7 +93,7 @@ public class PocketAuthProvider extends
 
 	@Override
 	protected String getAccessTokenParams(final Config c,
-			final String code, final Request request) {
+			final String code, final Http.RequestHeader requestHeader) {
 		final List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair(PocketConstants.CONSUMER_KEY, c
 				.getString(SettingKeys.CONSUMER_KEY)));
@@ -102,9 +102,9 @@ public class PocketAuthProvider extends
 		return URLEncodedUtils.format(params, "UTF-8");
 	}
 
-	private String getRequestToken(final Request request) throws AuthException {
+	private String getRequestToken(final Http.RequestHeader requestHeader) throws AuthException {
 		final Config c = getConfiguration();
-		final List<NameValuePair> params = getRequestTokenParams(request, c);
+		final List<NameValuePair> params = getRequestTokenParams(requestHeader, c);
 
 		try {
 			final WSResponse r = wsClient.url(c.getString(SettingKeys.REQUEST_TOKEN_URL))
@@ -122,24 +122,24 @@ public class PocketAuthProvider extends
 		}
 	}
 
-	private List<NameValuePair> getRequestTokenParams(final Request request,
+	private List<NameValuePair> getRequestTokenParams(final Http.RequestHeader requestHeader,
 			final Config c) throws ResolverMissingException {
 		final List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair(PocketConstants.CONSUMER_KEY, c
 				.getString(SettingKeys.CONSUMER_KEY)));
 		params.add(new BasicNameValuePair(getRedirectUriKey(),
-				getRedirectUrl(request)));
+				getRedirectUrl(requestHeader)));
 		return params;
 	}
 
 	@Override
 	protected List<NameValuePair> getAuthParams(final Config c,
-			final Request request, final String state) throws AuthException {
+			final Http.RequestHeader requestHeader, final String state) throws AuthException {
 		final List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair(PocketConstants.CONSUMER_KEY, c
 				.getString(SettingKeys.CONSUMER_KEY)));
 
-		final String requestToken = this.getRequestToken(request);
+		final String requestToken = this.getRequestToken(requestHeader);
 		params.add(new BasicNameValuePair(PocketConstants.REQUEST_TOKEN,
 				requestToken));
 
@@ -149,7 +149,7 @@ public class PocketAuthProvider extends
 
 		// with this we fake the response to contain the response to Play!
 		// Authenticate to contain the request token in the "code" parameter
-		final String redirectUrl = getRedirectUrl(request,
+		final String redirectUrl = getRedirectUrl(requestHeader,
 				Arrays.asList(new BasicNameValuePair(PocketConstants.CODE,
 						requestToken)));
 

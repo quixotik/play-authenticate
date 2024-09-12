@@ -3,3 +3,6 @@ github-buttons
 test-env.sh
 repo
 .idea
+.metals
+.vscode
+code/.bsp

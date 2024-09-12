@@ -68,8 +68,8 @@ public class XingAuthProvider extends
 	}
 
     @Override
-    protected void checkError(Http.Request request) throws AuthException {
-        final String error = request.getQueryString(XING_ERROR);
+    protected void checkError(Http.RequestHeader requestHeader) throws AuthException {
+        final String error = requestHeader.getQueryString(XING_ERROR);
 
         if (error != null) {
             if (error.equals(ACCESS_DENIED)) {

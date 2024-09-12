@@ -20,7 +20,7 @@ import play.data.validation.Constraints.Required;
 import play.i18n.Lang;
 import play.inject.ApplicationLifecycle;
 import play.mvc.Call;
-import play.mvc.Http.Context;
+import play.mvc.Http;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -152,17 +152,17 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	@Override
-	protected MySignup getSignup(final Context ctx) {
+	protected MySignup getSignup(final Http.RequestHeader ctx) {
 		// TODO change to getSignupForm().bindFromRequest(request) after 2.1
-		Context.current.set(ctx);
+		Http.RequestHeader.current.set(ctx);
 		final Form<MySignup> filledForm = getSignupForm().bindFromRequest();
 		return filledForm.get();
 	}
 
 	@Override
-	protected MyLogin getLogin(final Context ctx) {
+	protected MyLogin getLogin(final Http.RequestHeader ctx) {
 		// TODO change to getLoginForm().bindFromRequest(request) after 2.1
-		Context.current.set(ctx);
+		Http.RequestHeader.current.set(ctx);
 		final Form<MyLogin> filledForm = getLoginForm().bindFromRequest();
 		return filledForm.get();
 	}
@@ -232,40 +232,40 @@ public class MyUsernamePasswordAuthProvider
 
 	@Override
 	protected MyUsernamePasswordAuthUser buildSignupAuthUser(
-			final MySignup signup, final Context ctx) {
+			final MySignup signup, final Http.RequestHeader ctx) {
 		return new MyUsernamePasswordAuthUser(signup);
 	}
 
 	@Override
 	protected MyLoginUsernamePasswordAuthUser buildLoginAuthUser(
-			final MyLogin login, final Context ctx) {
+			final MyLogin login, final Http.RequestHeader ctx) {
 		return new MyLoginUsernamePasswordAuthUser(login.getPassword(),
 				login.getEmail());
 	}
 
 
 	@Override
-	protected MyLoginUsernamePasswordAuthUser transformAuthUser(final MyUsernamePasswordAuthUser authUser, final Context context) {
+	protected MyLoginUsernamePasswordAuthUser transformAuthUser(final MyUsernamePasswordAuthUser authUser, final Http.RequestHeader requestHeader) {
 		return new MyLoginUsernamePasswordAuthUser(authUser.getEmail());
 	}
 
 	@Override
 	protected String getVerifyEmailMailingSubject(
-			final MyUsernamePasswordAuthUser user, final Context ctx) {
+			final MyUsernamePasswordAuthUser user, final Http.RequestHeader ctx) {
 		return "playauthenticate.password.verify_signup.subject";
 	}
 
 	@Override
-	protected String onLoginUserNotFound(final Context context) {
-		context.flash()
+	protected String onLoginUserNotFound(final Http.RequestHeader requestHeader) {
+		requestHeader.flash()
 				.put(controllers.Application.FLASH_ERROR_KEY,
 						"playauthenticate.password.login.unknown_user_or_pw");
-		return super.onLoginUserNotFound(context);
+		return super.onLoginUserNotFound(requestHeader);
 	}
 
 	@Override
 	protected Body getVerifyEmailMailingBody(final String token,
-			final MyUsernamePasswordAuthUser user, final Context ctx) {
+			final MyUsernamePasswordAuthUser user, final Http.RequestHeader ctx) {
 
 		final boolean isSecure = getConfiguration().getBoolean(
 				SETTING_KEY_VERIFICATION_LINK_SECURE);
@@ -309,12 +309,12 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	protected String getPasswordResetMailingSubject(final User user,
-			final Context ctx) {
+			final Http.RequestHeader ctx) {
 		return "playauthenticate.password.reset_email.subject";
 	}
 
 	protected Body getPasswordResetMailingBody(final String token,
-			final User user, final Context ctx) {
+			final User user, final Http.RequestHeader ctx) {
 
 		final boolean isSecure = getConfiguration().getBoolean(
 				SETTING_KEY_PASSWORD_RESET_LINK_SECURE);
@@ -334,7 +334,7 @@ public class MyUsernamePasswordAuthProvider
 		return new Body(text, html);
 	}
 
-	public void sendPasswordResetMailing(final User user, final Context ctx) {
+	public void sendPasswordResetMailing(final User user, final Http.RequestHeader ctx) {
 		final String token = generatePasswordResetRecord(user);
 		final String subject = getPasswordResetMailingSubject(user, ctx);
 		final Body body = getPasswordResetMailingBody(token, user, ctx);
@@ -347,7 +347,7 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	protected String getVerifyEmailMailingSubjectAfterSignup(final User user,
-			final Context ctx) {
+			final Http.RequestHeader ctx) {
 		return "playauthenticate.password.verify_email.subject";
 	}
 
@@ -395,7 +395,7 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	protected Body getVerifyEmailMailingBodyAfterSignup(final String token,
-			final User user, final Context ctx) {
+			final User user, final Http.RequestHeader ctx) {
 
 		final boolean isSecure = getConfiguration().getBoolean(
 				SETTING_KEY_VERIFICATION_LINK_SECURE);
@@ -416,12 +416,12 @@ public class MyUsernamePasswordAuthProvider
 	}
 
 	public void sendVerifyEmailMailingAfterSignup(final User user,
-			final Context ctx) {
+			final Http.Request request) {
 
 		final String subject = getVerifyEmailMailingSubjectAfterSignup(user,
-				ctx);
+		request);
 		final String token = generateVerificationRecord(user);
-		final Body body = getVerifyEmailMailingBodyAfterSignup(token, user, ctx);
+		final Body body = getVerifyEmailMailingBodyAfterSignup(token, user, request);
 		sendMail(subject, body, getEmailName(user));
 	}
 

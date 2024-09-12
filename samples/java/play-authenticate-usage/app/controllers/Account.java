@@ -14,6 +14,8 @@ import play.data.validation.Constraints.Required;
 import play.i18n.MessagesApi;
 import play.mvc.Controller;
 import play.mvc.Result;
+import play.mvc.Http;
+
 import providers.MyUsernamePasswordAuthProvider;
 import providers.MyUsernamePasswordAuthUser;
 import service.UserProvider;
@@ -102,20 +104,20 @@ public class Account extends Controller {
 	}
 
 	@Restrict(@Group(Application.USER_ROLE))
-	public Result verifyEmail() {
+	public Result verifyEmail(Http.Request request) {
 		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
 		final User user = this.userProvider.getUser(session());
 		if (user.emailValidated) {
 			// E-Mail has been validated already
 			flash(Application.FLASH_MESSAGE_KEY,
-					this.msg.preferred(request()).at("playauthenticate.verify_email.error.already_validated"));
+					this.msg.preferred(request).at("playauthenticate.verify_email.error.already_validated"));
 		} else if (user.email != null && !user.email.trim().isEmpty()) {
-			flash(Application.FLASH_MESSAGE_KEY, this.msg.preferred(request()).at(
+			flash(Application.FLASH_MESSAGE_KEY, this.msg.preferred(request).at(
 					"playauthenticate.verify_email.message.instructions_sent",
 					user.email));
-			this.myUsrPaswProvider.sendVerifyEmailMailingAfterSignup(user, ctx());
+			this.myUsrPaswProvider.sendVerifyEmailMailingAfterSignup(user, request);
 		} else {
-			flash(Application.FLASH_MESSAGE_KEY, this.msg.preferred(request()).at(
+			flash(Application.FLASH_MESSAGE_KEY, this.msg.preferred(request).at(
 					"playauthenticate.verify_email.error.set_email_first",
 					user.email));
 		}
@@ -135,8 +137,8 @@ public class Account extends Controller {
 	}
 
 	@Restrict(@Group(Application.USER_ROLE))
-	public Result doChangePassword() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doChangePassword(Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		final Form<Account.PasswordChange> filledForm = PASSWORD_CHANGE_FORM
 				.bindFromRequest();
 		if (filledForm.hasErrors()) {
@@ -154,9 +156,9 @@ public class Account extends Controller {
 	}
 
 	@SubjectPresent
-	public Result askLink() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
-		final AuthUser u = this.auth.getLinkUser(session());
+	public Result askLink(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
+		final AuthUser u = this.auth.getLinkUser(request.session());
 		if (u == null) {
 			// account to link could not be found, silently redirect to login
 			return redirect(routes.Application.index());
@@ -165,9 +167,9 @@ public class Account extends Controller {
 	}
 
 	@SubjectPresent
-	public Result doLink() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
-		final AuthUser u = this.auth.getLinkUser(session());
+	public Result doLink(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
+		final AuthUser u = this.auth.getLinkUser(request.session());
 		if (u == null) {
 			// account to link could not be found, silently redirect to login
 			return redirect(routes.Application.index());
@@ -182,20 +184,20 @@ public class Account extends Controller {
 			final boolean link = filledForm.get().accept;
 			if (link) {
 				flash(Application.FLASH_MESSAGE_KEY,
-						this.msg.preferred(request()).at("playauthenticate.accounts.link.success"));
+						this.msg.preferred(request).at("playauthenticate.accounts.link.success"));
 			}
-			return this.auth.link(ctx(), link);
+			return this.auth.link(request, link);
 		}
 	}
 
 	@SubjectPresent
-	public Result askMerge() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result askMerge(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		// this is the currently logged in user
-		final AuthUser aUser = this.auth.getUser(session());
+		final AuthUser aUser = this.auth.getUser(request.session());
 
 		// this is the user that was selected for a login
-		final AuthUser bUser = this.auth.getMergeUser(session());
+		final AuthUser bUser = this.auth.getMergeUser(request.session());
 		if (bUser == null) {
 			// user to merge with could not be found, silently redirect to login
 			return redirect(routes.Application.index());
@@ -207,13 +209,13 @@ public class Account extends Controller {
 	}
 
 	@SubjectPresent
-	public Result doMerge() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doMerge(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		// this is the currently logged in user
-		final AuthUser aUser = this.auth.getUser(session());
+		final AuthUser aUser = this.auth.getUser(request.session());
 
 		// this is the user that was selected for a login
-		final AuthUser bUser = this.auth.getMergeUser(session());
+		final AuthUser bUser = this.auth.getMergeUser(request.session());
 		if (bUser == null) {
 			// user to merge with could not be found, silently redirect to login
 			return redirect(routes.Application.index());
@@ -228,9 +230,9 @@ public class Account extends Controller {
 			final boolean merge = filledForm.get().accept;
 			if (merge) {
 				flash(Application.FLASH_MESSAGE_KEY,
-						this.msg.preferred(request()).at("playauthenticate.accounts.merge.success"));
+						this.msg.preferred(request).at("playauthenticate.accounts.merge.success"));
 			}
-			return this.auth.merge(ctx(), merge);
+			return this.auth.merge(request, merge);
 		}
 	}
 

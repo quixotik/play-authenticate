@@ -224,7 +224,7 @@ There is also a [sample application using Play!Authenticate with MongoDB](https:
 * **0.1.9-SNAPSHOT** [2012-07-16]
   * Fix for invalid locale formats (e.g. en-GB) coming from   Google and/or facebook OAuth.
 * **0.1.8-SNAPSHOT** [2012-07-12]
-  * Change: Password auth provider now gets Context passed in `buildLoginAuthUser` and `buildSignupAuthUser` so you can get the locale of the user signing up for example. This change affects prior written auth providers based on `UsernamePasswordAuthProvider` - see the sample app or just add an additional `Context` parameter to fix it.
+  * Change: Password auth provider now gets Http.RequestHeader passed in `buildLoginAuthUser` and `buildSignupAuthUser` so you can get the locale of the user signing up for example. This change affects prior written auth providers based on `UsernamePasswordAuthProvider` - see the sample app or just add an additional `Http.RequestHeader` parameter to fix it.
   * More localization (emails, parts of navigation)
   * Fix of `LocaleIdentity` implementation for facebook and google.
 * **0.1.7-SNAPSHOT** [2012-07-09]

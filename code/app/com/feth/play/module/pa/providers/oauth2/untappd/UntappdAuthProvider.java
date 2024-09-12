@@ -15,7 +15,7 @@ import play.i18n.MessagesApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
-import play.mvc.Http.Request;
+import play.mvc.Http;
 
 import javax.inject.Singleton;
 import java.util.List;
@@ -92,7 +92,7 @@ public class UntappdAuthProvider extends
 	}
 
 	protected UntappdAuthInfo getAccessToken(final String code,
-			final Request request) throws AccessTokenException, ResolverMissingException {
+			final Http.RequestHeader requestHeader) throws AccessTokenException, ResolverMissingException {
 		final Config c = getConfiguration();
 
 		final String url = c.getString(SettingKeys.ACCESS_TOKEN_URL);
@@ -106,7 +106,7 @@ public class UntappdAuthProvider extends
 							c.getString(SettingKeys.CLIENT_SECRET))
 					.addQueryParameter(Constants.RESPONSE_TYPE, Constants.CODE)
 					.addQueryParameter(Constants.CODE, code)
-					.addQueryParameter(getRedirectUriKey(), getRedirectUrl(request))
+					.addQueryParameter(getRedirectUriKey(), getRedirectUrl(requestHeader))
 					// we use GET here
 					.get().toCompletableFuture().get(getTimeout(), TimeUnit.MILLISECONDS);
 
@@ -117,9 +117,9 @@ public class UntappdAuthProvider extends
 	}
 
 	@Override
-	protected List<NameValuePair> getParams(final Request request,
+	protected List<NameValuePair> getParams(final Http.RequestHeader requestHeader,
 			final Config c) throws ResolverMissingException {
-		final List<NameValuePair> params = super.getParams(request, c);
+		final List<NameValuePair> params = super.getParams(requestHeader, c);
 
 		params.add(new BasicNameValuePair(Constants.CLIENT_SECRET, c
 				.getString(SettingKeys.CLIENT_SECRET)));

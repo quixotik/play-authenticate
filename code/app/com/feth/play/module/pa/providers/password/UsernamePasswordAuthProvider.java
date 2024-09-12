@@ -1,6 +1,6 @@
 package com.feth.play.module.pa.providers.password;
 
-import akka.actor.Cancellable;
+import org.apache.pekko.actor.Cancellable;
 
 import com.feth.play.module.mail.IMailer;
 import com.feth.play.module.mail.Mailer;
@@ -15,8 +15,9 @@ import com.feth.play.module.pa.user.NameIdentity;
 
 import play.inject.ApplicationLifecycle;
 import play.mvc.Call;
+import play.mvc.Controller;
 import play.mvc.Http;
-import play.mvc.Http.Context;
+import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
 import javax.inject.Inject;
@@ -84,12 +85,12 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 	}
 
 	@Override
-	public Object authenticate(final Context context, final Object payload)
+	public Object authenticate(final Http.Request request, final Object payload)
 			throws AuthException {
 
 		if (payload == Case.SIGNUP) {
-			final S signup = getSignup(context);
-			final US authUser = buildSignupAuthUser(signup, context);
+			final S signup = getSignup(request);
+			final US authUser = buildSignupAuthUser(signup, request);
 			final SignupResult r = signupUser(authUser);
 
 			switch (r) {
@@ -100,17 +101,17 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 			case USER_CREATED_UNVERIFIED:
 				// User got created as unverified
 				// Send validation email
-				sendVerifyEmailMailing(context, authUser);
+				sendVerifyEmailMailing(request, authUser);
 				return userUnverified(authUser).url();
 			case USER_CREATED:
 				// continue to login...
-				return transformAuthUser(authUser, context);
+				return transformAuthUser(authUser, request);
 			default:
 				throw new AuthException("Something in signup went wrong");
 			}
 		} else if (payload == Case.LOGIN) {
-			final L login = getLogin(context);
-			final UL authUser = buildLoginAuthUser(login, context);
+			final L login = getLogin(request);
+			final UL authUser = buildLoginAuthUser(login, request);
 			final LoginResult r = loginUser(authUser);
 			switch (r) {
 			case USER_UNVERIFIED:
@@ -125,7 +126,7 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 				// knows they signed up for our service
 			case NOT_FOUND:
 				// forward to login page
-				return onLoginUserNotFound(context);
+				return onLoginUserNotFound(request);
 			default:
 				throw new AuthException("Something in login went wrong");
 			}
@@ -134,12 +135,12 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 		}
 	}
 
-	protected String onLoginUserNotFound(Context context) {
-		return this.auth.getResolver().login().url();
+	protected Result onLoginUserNotFound(Http.Request request) {
+		return Controller.redirect(this.auth.getResolver().login());
 	}
 
-	public Result handleLogin(final Context ctx) {
-		return this.auth.handleAuthentication(PROVIDER_KEY, ctx,
+	public Result handleLogin(final Http.Request request) {
+		return this.auth.handleAuthentication(PROVIDER_KEY, request,
 				Case.LOGIN);
 	}
 
@@ -148,9 +149,8 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 		return new SessionUsernamePasswordAuthUser(getKey(), id, expires);
 	}
 
-	public Result handleSignup(final Context ctx) {
-		return this.auth.handleAuthentication(PROVIDER_KEY, ctx,
-				Case.SIGNUP);
+	public Result handleSignup(final Http.Request request) {
+		return this.auth.handleAuthentication(PROVIDER_KEY, request, Case.SIGNUP);
 	}
 
 	/**
@@ -176,10 +176,10 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 
 	protected abstract R generateVerificationRecord(final US user);
 
-	protected void sendVerifyEmailMailing(final Context ctx, final US user) {
-		final String subject = getVerifyEmailMailingSubject(user, ctx);
+	protected void sendVerifyEmailMailing(final Http.Request request, final US user) {
+		final String subject = getVerifyEmailMailingSubject(user, request);
 		final R record = generateVerificationRecord(user);
-		final Body body = getVerifyEmailMailingBody(record, user, ctx);
+		final Body body = getVerifyEmailMailingBody(record, user, request);
 		sendMail(subject, body, getEmailName(user));
 	}
 
@@ -194,7 +194,7 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 	 *            The mail's body.
 	 * @param recipient
 	 *            The (formatted) recipient.
-	 * @return The {@link akka.actor.Cancellable} that can be used to cancel the
+	 * @return The {@link org.apache.pekko.actor.Cancellable} that can be used to cancel the
 	 *         action.
 	 */
 	protected Cancellable sendMail(final String subject, final Body body,
@@ -207,7 +207,7 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 	 *
 	 * @param mail
 	 *            The mail to be sent.
-	 * @return The {@link akka.actor.Cancellable} that can be used to cancel the
+	 * @return The {@link org.apache.pekko.actor.Cancellable} that can be used to cancel the
 	 *         action.
 	 */
 	protected Cancellable sendMail(final Mail mail) {
@@ -220,31 +220,31 @@ public abstract class UsernamePasswordAuthProvider<R, UL extends UsernamePasswor
 	}
 
 	protected abstract String getVerifyEmailMailingSubject(final US user,
-			final Context ctx);
+			final Http.Request request);
 
 	protected abstract Body getVerifyEmailMailingBody(
-			final R verificationRecord, final US user, final Context ctx);
+			final R verificationRecord, final US user, final Http.Request request);
 
-	protected abstract UL buildLoginAuthUser(final L login, final Context ctx);
+	protected abstract UL buildLoginAuthUser(final L login, final Http.Request request);
 
 	/**
 	 * This gets called when the user shall be logged in directly after signing up
 	 *
 	 * @param authUser
-	 * @param context
+	 * @param requestHeader
 	 * @return
 	 */
-	protected abstract UL transformAuthUser(final US authUser, final Context context);
+	protected abstract UL transformAuthUser(final US authUser, final Http.Request request);
 
-	protected abstract US buildSignupAuthUser(final S signup, final Context ctx);
+	protected abstract US buildSignupAuthUser(final S signup, final Http.Request request);
 
 	protected abstract LoginResult loginUser(final UL authUser);
 
 	protected abstract SignupResult signupUser(final US user);
 
-	protected abstract S getSignup(final Context ctx);
+	protected abstract S getSignup(final Http.Request request);
 
-	protected abstract L getLogin(final Context ctx);
+	protected abstract L getLogin(final Http.Request request);
 
 	protected abstract Call userExists(final UsernamePasswordAuthUser authUser);
 

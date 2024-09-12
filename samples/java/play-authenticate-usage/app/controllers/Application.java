@@ -7,6 +7,8 @@ import models.User;
 import play.data.Form;
 import play.mvc.Controller;
 import play.mvc.Result;
+import play.mvc.Http;
+
 import providers.MyUsernamePasswordAuthProvider;
 import providers.MyUsernamePasswordAuthProvider.MyLogin;
 import providers.MyUsernamePasswordAuthProvider.MySignup;
@@ -61,8 +63,8 @@ public class Application extends Controller {
 		return ok(login.render(this.auth, this.userProvider,  this.provider.getLoginForm()));
 	}
 
-	public Result doLogin() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doLogin(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		final Form<MyLogin> filledForm = this.provider.getLoginForm()
 				.bindFromRequest();
 		if (filledForm.hasErrors()) {
@@ -70,7 +72,7 @@ public class Application extends Controller {
 			return badRequest(login.render(this.auth, this.userProvider, filledForm));
 		} else {
 			// Everything was filled
-			return this.provider.handleLogin(ctx());
+			return this.provider.handleLogin(request, result);
 		}
 	}
 
@@ -86,8 +88,8 @@ public class Application extends Controller {
 
 	}
 
-	public Result doSignup() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doSignup(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		final Form<MySignup> filledForm = this.provider.getSignupForm().bindFromRequest();
 		if (filledForm.hasErrors()) {
 			// User did not fill everything properly
@@ -96,7 +98,7 @@ public class Application extends Controller {
 			// Everything was filled
 			// do something with your part of the form before handling the user
 			// signup
-			return this.provider.handleSignup(ctx());
+			return this.provider.handleSignup(request, result);
 		}
 	}
 }

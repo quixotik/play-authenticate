@@ -19,7 +19,7 @@ import com.feth.play.module.pa.PlayAuthenticate;
 import com.feth.play.module.pa.providers.wwwauth.WWWAuthenticateProvider;
 import com.feth.play.module.pa.user.AuthUser;
 import play.inject.ApplicationLifecycle;
-import play.mvc.Http.Context;
+import play.mvc.Http;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -63,7 +63,7 @@ public abstract class BasicAuthProvider extends WWWAuthenticateProvider {
 	}
 
 	@Override
-	protected String challenge(Context context) {
+	protected String challenge(Http.RequestHeader requestHeader) {
 		String realm = getConfiguration().getString(SettingKeys.REALM);
 		// TODO: Check that this is actually the correct encoding
 		return String.format("realm=\"%s\"", Base64.getEncoder().encode(realm.getBytes()));

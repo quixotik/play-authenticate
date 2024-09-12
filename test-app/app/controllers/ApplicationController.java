@@ -7,6 +7,8 @@ import play.data.Form;
 import play.data.FormFactory;
 import play.mvc.Controller;
 import play.mvc.Result;
+import play.mvc.Http;
+
 import providers.TestUsernamePasswordAuthProvider;
 import providers.TestUsernamePasswordAuthProvider.Login;
 import providers.TestUsernamePasswordAuthProvider.Signup;
@@ -36,15 +38,15 @@ public class ApplicationController extends Controller {
 		return ok(views.html.login.render(formFactory.form(Login.class).bindFromRequest()));
 	}
 
-	public Result doLogin() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doLogin(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		final Form<Login> filledForm = formFactory.form(Login.class).bindFromRequest();
 		if (filledForm.hasErrors()) {
 			// User did not fill everything properly
 			return badRequest(views.html.login.render(filledForm));
 		} else {
 			// Everything was filled
-			return testProvider.handleLogin(ctx());
+			return testProvider.handleLogin(request, result);
 		}
 	}
 
@@ -53,15 +55,15 @@ public class ApplicationController extends Controller {
 				.render(formFactory.form(Signup.class).bindFromRequest()));
 	}
 
-	public Result doSignup() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doSignup(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		final Form<Signup> filledForm = formFactory.form(Signup.class).bindFromRequest();
 		if (filledForm.hasErrors()) {
 			// User did not fill everything properly
 			return badRequest(views.html.signup.render(filledForm));
 		} else {
 			// Everything was filled
-			return testProvider.handleSignup(ctx());
+			return testProvider.handleSignup(request, result);
 		}
 	}
 
@@ -73,13 +75,13 @@ public class ApplicationController extends Controller {
 		return badRequest("User not yet verified.");
 	}
 
-	public Result verify(String token) {
+	public Result verify(Http.Request request, String token) {
 		TestUsernamePasswordAuthProvider.LoginUser loginUser = this.testProvider
 				.verifyWithToken(token);
 		if (loginUser == null) {
 			return notFound();
 		}
-		return testProvider.getAuth().loginAndRedirect(ctx(), loginUser);
+		return testProvider.getAuth().loginAndRedirect(request, loginUser);
 	}
 
 	public Result oAuthDenied(String providerKey) {

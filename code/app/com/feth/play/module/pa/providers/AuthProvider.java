@@ -7,9 +7,8 @@ import com.feth.play.module.pa.user.SessionAuthUser;
 import com.typesafe.config.Config;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
-import play.mvc.Http.Context;
-import play.mvc.Http.Request;
-import play.mvc.Http.Session;
+import play.mvc.Http;
+import play.mvc.Result;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -92,7 +91,7 @@ public abstract class AuthProvider {
 		return this.auth.getResolver().auth(getKey()).url();
 	}
 
-	protected String getAbsoluteUrl(final Request request) {
+	protected String getAbsoluteUrl(final Http.Request request) {
 		return this.auth.getResolver().auth(getKey())
 				.absoluteURL(request);
 	}
@@ -105,15 +104,15 @@ public abstract class AuthProvider {
 
 	/**
 	 *
-	 * @param context
+	 * @param requestHeader
 	 * @param payload
 	 *            Some arbitrary payload that shall get passed into the
 	 *            authentication process
 	 * @return either an AuthUser object or a String (URL)
 	 * @throws AuthException
 	 */
-	public abstract Object authenticate(final Context context,
-			final Object payload) throws AuthException;
+	public abstract Object authenticate(final Http.Request request,
+		final Object payload) throws AuthException;
 
 	protected List<String> neededSettingKeys() {
 		return null;
@@ -132,7 +131,7 @@ public abstract class AuthProvider {
      * @param identity The user identity returned fro, the save operation in the UserService
      * @param session The session
      */
-    public void afterSave(final AuthUser user, final Object identity, final Session session) {
+    public void afterSave(final AuthUser user, final Object identity, final Http.Session session) {
 
     }
 }

@@ -21,7 +21,7 @@ import com.feth.play.module.pa.user.AuthUser;
 import play.data.Form;
 import play.data.FormFactory;
 import play.inject.ApplicationLifecycle;
-import play.mvc.Http.Context;
+import play.mvc.Http.RequestHeader;
 import play.twirl.api.Content;
 import service.UserProvider;
 import views.html.login;
@@ -73,7 +73,7 @@ public class MyStupidBasicAuthProvider extends BasicAuthProvider {
 
 	/** Diplay the normal login form if HTTP authentication fails */
 	@Override
-	protected Content unauthorized(Context context) {
+	protected Content unauthorized(Http.RequestHeader requestHeader) {
 		return login.render(this.auth, this.userProvider, this.LOGIN_FORM);
 	}
 }

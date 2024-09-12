@@ -17,8 +17,8 @@ import play.libs.oauth.OAuth.RequestToken;
 import play.libs.oauth.OAuth.ServiceInfo;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
-import play.mvc.Http.Context;
-import play.mvc.Http.Request;
+import play.mvc.Http;
+import play.mvc.Result;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -84,8 +84,8 @@ public abstract class OAuth1AuthProvider<U extends AuthUserIdentity, I extends O
 		}
 	}
 
-    protected void checkError(Request request) throws AuthException{
-        final String error = request.getQueryString(Constants.OAUTH_PROBLEM);
+    protected void checkError(Http.RequestHeader requestHeader) throws AuthException{
+        final String error = requestHeader.getQueryString(Constants.OAUTH_PROBLEM);
 
         if (error != null) {
             if (error.equals(Constants.OAUTH_ACCESS_DENIED)) {
@@ -97,10 +97,9 @@ public abstract class OAuth1AuthProvider<U extends AuthUserIdentity, I extends O
     }
 
     @Override
-	public Object authenticate(final Context context, final Object payload)
+	public Object authenticate(final Http.Request request, final Object payload)
 			throws AuthException {
 
-		final Request request = context.request();
 		final String uri = request.uri();
 
 		if (Logger.isDebugEnabled()) {
@@ -126,7 +125,7 @@ public abstract class OAuth1AuthProvider<U extends AuthUserIdentity, I extends O
         if (uri.contains(Constants.OAUTH_VERIFIER)) {
 
 			final RequestToken rtoken = (RequestToken) this.auth
-					.removeFromCache(context.session(), CACHE_TOKEN);
+					.removeFromCache(request.session(), CACHE_TOKEN);
 			final String verifier = request.getQueryString(Constants.OAUTH_VERIFIER);
 			try {
 				final RequestToken response = service
@@ -148,7 +147,7 @@ public abstract class OAuth1AuthProvider<U extends AuthUserIdentity, I extends O
 				final String token = response.token;
 				final String redirectUrl = service.redirectUrl(token);
 
-				this.auth.storeInCache(context.session(), CACHE_TOKEN,
+				this.auth.storeInCache(request.session(), CACHE_TOKEN,
 						new SerializableRequestToken(response));
 				return redirectUrl;
 			} catch (RuntimeException ex) {

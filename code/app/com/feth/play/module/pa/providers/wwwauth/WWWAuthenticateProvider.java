@@ -23,7 +23,7 @@ import com.feth.play.module.pa.providers.AuthProvider;
 import com.feth.play.module.pa.user.AuthUser;
 import play.inject.ApplicationLifecycle;
 import play.mvc.Controller;
-import play.mvc.Http.Context;
+import play.mvc.Http;
 import play.mvc.Result;
 import play.twirl.api.Content;
 
@@ -52,10 +52,10 @@ public abstract class WWWAuthenticateProvider extends AuthProvider {
 
 	/** The challenge to provide to an unauthenticated client.
 	 *
-	 * @param context The current request context
+	 * @param requestHeader The current request requestHeader
 	 * @return The challenge string to return (without the scheme name), or null
 	 */
-	protected abstract String challenge(Context context);
+	protected abstract String challenge(Http.RequestHeader requestHeader);
 
 	/** Try to authenticate the incoming Request.
 	 *
@@ -70,10 +70,10 @@ public abstract class WWWAuthenticateProvider extends AuthProvider {
 	 * This could for example be a login form that submits to another
 	 * authentication method.
 	 *
-	 * @param context The current request context
+	 * @param requestHeader The current request requestHeader
 	 * @return The formatted unauthorized page
 	 */
-	protected Content unauthorized(Context context) {
+	protected Content unauthorized(Http.RequestHeader requestHeader) {
 		return new Content() {
 
 			@Override
@@ -87,33 +87,34 @@ public abstract class WWWAuthenticateProvider extends AuthProvider {
 			}};
 	}
 
-	private Result deny(Context context) {
-		String authChallenge = challenge(context);
+	private Result deny(Http.RequestHeader requestHeader) {
+		String authChallenge = challenge(requestHeader);
 		if (authChallenge == null) {
 			authChallenge = authScheme();
 		} else {
 			authChallenge = authScheme()+" "+authChallenge;
 		}
-		context.response().setHeader("WWW-Authenticate", authChallenge);
 
-		return Controller.unauthorized(unauthorized(context));
+		Result result = Controller.unauthorized(unauthorized(requestHeader));
+		result.withHeader("WWW-Authenticate", authChallenge);
+		return result;
 	}
 
 	@Override
-	public Object authenticate(Context context, Object payload)	throws AuthException {
-		Optional<String> authHeader = context.request().header("Authorization");
+	public Object authenticate(Http.Request request, Object payload)	throws AuthException {
+		Optional<String> authHeader = request.header("Authorization");
 
 		if (!authHeader.isPresent()) {
-			return deny(context);
+			return deny(request);
 		}
 		String auth = authHeader.get();
 		int ix = auth.indexOf(32);
 		if (ix == -1 || !authScheme().equalsIgnoreCase(auth.substring(0,ix))) {
-			return deny(context);
+			return deny(request);
 		}
 		AuthUser user = authenticateResponse(auth.substring(ix+1));
 		if (user == null) {
-			return deny(context);
+			return deny(request);
 		} else {
 			return user;
 		}

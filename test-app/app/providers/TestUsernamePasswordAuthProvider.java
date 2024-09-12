@@ -13,7 +13,7 @@ import play.data.validation.Constraints.MinLength;
 import play.data.validation.Constraints.Required;
 import play.inject.ApplicationLifecycle;
 import play.mvc.Call;
-import play.mvc.Http.Context;
+import play.mvc.Http.RequestHeader;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -118,29 +118,29 @@ public class TestUsernamePasswordAuthProvider
 	}
 
 	@Override
-	protected String getVerifyEmailMailingSubject(SignupUser user, Context ctx) {
+	protected String getVerifyEmailMailingSubject(SignupUser user, Http.RequestHeader ctx) {
 		return "Please verify your email address";
 	}
 
 	@Override
 	protected Body getVerifyEmailMailingBody(String verificationRecord,
-			SignupUser user, Context ctx) {
+			SignupUser user, Http.RequestHeader ctx) {
 		// No human will ever look at this body, so make it simple
 		return new Body(verificationRecord);
 	}
 
 	@Override
-	protected LoginUser buildLoginAuthUser(Login login, Context ctx) {
+	protected LoginUser buildLoginAuthUser(Login login, Http.RequestHeader ctx) {
 		return new LoginUser(login.getPassword(), login.getEmail());
 	}
 
 	@Override
-	protected LoginUser transformAuthUser(SignupUser signupUser, Context context) {
+	protected LoginUser transformAuthUser(SignupUser signupUser, Http.RequestHeader requestHeader) {
 		return new LoginUser(signupUser.getEmail());
 	}
 
 	@Override
-	protected SignupUser buildSignupAuthUser(Signup signup, Context ctx) {
+	protected SignupUser buildSignupAuthUser(Signup signup, Http.RequestHeader ctx) {
 		return new SignupUser(signup.getPassword(), signup.getEmail());
 	}
 
@@ -189,16 +189,16 @@ public class TestUsernamePasswordAuthProvider
 	}
 
 	@Override
-	protected Signup getSignup(final Context ctx) {
-		Context.current.set(ctx);
+	protected Signup getSignup(final Http.RequestHeader ctx) {
+		Http.RequestHeader.current.set(ctx);
 		final Form<Signup> filledForm = getSignupForm().bindFromRequest();
 		return filledForm.get();
 	}
 
 	@Override
-	protected Login getLogin(final Context ctx) {
+	protected Login getLogin(final Http.RequestHeader ctx) {
 		// TODO change to getLoginForm().bindFromRequest(request) after 2.1
-		Context.current.set(ctx);
+		Http.RequestHeader.current.set(ctx);
 		final Form<Login> filledForm = getLoginForm().bindFromRequest();
 		return filledForm.get();
 	}

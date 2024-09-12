@@ -15,9 +15,8 @@ import play.inject.ApplicationLifecycle;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
-import play.mvc.Http.Context;
-import play.mvc.Http.Request;
-import play.mvc.Http.Session;
+import play.mvc.Http;
+import play.mvc.Result;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -109,8 +108,8 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
 	}
 
 	protected String getAccessTokenParams(final Config c,
-			final String code, Request request) throws ResolverMissingException {
-		final List<NameValuePair> params = getParams(request, c);
+			final String code, Http.RequestHeader requestHeader) throws ResolverMissingException {
+		final List<NameValuePair> params = getParams(requestHeader, c);
 		params.add(new BasicNameValuePair(Constants.CLIENT_SECRET, c
 				.getString(SettingKeys.CLIENT_SECRET)));
 		params.add(new BasicNameValuePair(Constants.GRANT_TYPE,
@@ -124,10 +123,10 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
         return Collections.<String, String>emptyMap();
     }
 
-	protected I getAccessToken(final String code, final Request request)
+	protected I getAccessToken(final String code, final Http.RequestHeader requestHeader)
             throws AccessTokenException, ResolverMissingException {
 		final Config c = getConfiguration();
-		final String params = getAccessTokenParams(c, code, request);
+		final String params = getAccessTokenParams(c, code, requestHeader);
 		final String url = c.getString(SettingKeys.ACCESS_TOKEN_URL);
         final WSRequest wrh = wsClient.url(url);
         wrh.addHeader(CONTENT_TYPE, "application/x-www-form-urlencoded");
@@ -146,16 +145,16 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
 	protected abstract I buildInfo(final WSResponse r)
 			throws AccessTokenException;
 
-	protected String getAuthUrl(final Request request, final String state)
+	protected String getAuthUrl(final Http.RequestHeader requestHeader, final String state)
 			throws AuthException {
 		final Config c = getConfiguration();
-		final List<NameValuePair> params = getAuthParams(c, request, state);
+		final List<NameValuePair> params = getAuthParams(c, requestHeader, state);
 		return generateURI(c.getString(SettingKeys.AUTHORIZATION_URL), params);
 	}
 
 	protected List<NameValuePair> getAuthParams(final Config c,
-			final Request request, final String state) throws AuthException {
-		final List<NameValuePair> params = getParams(request, c);
+			final Http.RequestHeader requestHeader, final String state) throws AuthException {
+		final List<NameValuePair> params = getParams(requestHeader, c);
 		if (c.hasPath(SettingKeys.SCOPE)) {
 			params.add(new BasicNameValuePair(Constants.SCOPE, c
 					.getString(SettingKeys.SCOPE)));
@@ -180,13 +179,13 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
 		return params;
 	}
 
-	protected List<NameValuePair> getParams(final Request request,
+	protected List<NameValuePair> getParams(final Http.RequestHeader requestHeader,
 			final Config c) throws ResolverMissingException {
 		final List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair(Constants.CLIENT_ID, c
 				.getString(SettingKeys.CLIENT_ID)));
 		params.add(new BasicNameValuePair(getRedirectUriKey(),
-				getRedirectUrl(request)));
+				getRedirectUrl(requestHeader)));
 		return params;
 	}
 
@@ -195,10 +194,8 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
 	}
 
 	@Override
-	public Object authenticate(final Context context, final Object payload)
+	public Object authenticate(final Http.Request request, final Object payload)
 			throws AuthException {
-
-		final Request request = context.request();
 
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("Returned with URL: '" + request.uri() + "'");
@@ -217,13 +214,13 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
 			} else {
 				throw new AuthException(error);
 			}
-		} else if (isCallbackRequest(context)) {
+		} else if (isCallbackRequest(request)) {
 			// second step in auth process
-            final UUID storedState = this.auth.getFromCache(context.session(), STATE_TOKEN);
+            final UUID storedState = this.auth.getFromCache(request.session(), STATE_TOKEN);
             if(storedState == null) {
                 Logger.warn("Cache either timed out, or you are using a setup with multiple servers and a non-shared cache implementation");
                 // we will just behave as if there was no auth, yet...
-                return generateRedirectUrl(context, request);
+                return generateRedirectUrl(request);
             }
             final String callbackState = request.getQueryString(Constants.STATE);
             if(!storedState.equals(UUID.fromString(callbackState))) {
@@ -235,20 +232,20 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
             return transform(info, callbackState);
 		} else {
 			// no auth, yet
-            return generateRedirectUrl(context, request);
+            return generateRedirectUrl(request);
 		}
 	}
 
-    private String generateRedirectUrl(Context context, Request request) throws AuthException {
+    private String generateRedirectUrl(Http.RequestHeader requestHeader) throws AuthException {
         final UUID state = UUID.randomUUID();
-		this.auth.storeInCache(context.session(), STATE_TOKEN, state);
-        final String url = getAuthUrl(request, state.toString());
+		this.auth.storeInCache(requestHeader.session(), STATE_TOKEN, state);
+        final String url = getAuthUrl(requestHeader, state.toString());
         Logger.debug("generated redirect URL for dialog: " + url);
         return url;
     }
 
-    protected boolean isCallbackRequest(final Context context) {
-		return context.request().queryString().containsKey(Constants.CODE);
+    protected boolean isCallbackRequest(final Http.RequestHeader requestHeader) {
+		return requestHeader.queryString().containsKey(Constants.CODE);
 	}
 
 	protected String getErrorParameterKey() {
@@ -256,7 +253,7 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
 	}
 
     @Override
-    public void afterSave(final AuthUser user, final Object identity, final Session session) {
+    public void afterSave(final AuthUser user, final Object identity, final Http.Session session) {
 		this.auth.removeFromCache(session, STATE_TOKEN);
     }
 

@@ -1,6 +1,6 @@
 package controllers;
 
-import play.mvc.Http.Context;
+import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 import play.mvc.Security;
 
@@ -23,13 +23,13 @@ public class JavaSecured extends Security.Authenticator {
     }
 
     @Override
-    public String getUsername(final Context ctx) {
+    public String getUsername(final Http.RequestHeader ctx) {
 	final AuthUser u = this.auth.getUser(ctx.session());
 	return (u != null ? u.getId() : null);
     }
 
     @Override
-    public Result onUnauthorized(final Context ctx) {
+    public Result onUnauthorized(final Http.RequestHeader ctx) {
 	ctx.flash().put(FLASH_MESSAGE_KEY,
 		"Nice try, but you need to log in first!");
 	return redirect(routes.ApplicationController.index());

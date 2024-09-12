@@ -8,6 +8,8 @@ import play.data.FormFactory;
 import play.i18n.MessagesApi;
 import play.mvc.Controller;
 import play.mvc.Result;
+import play.mvc.Http;
+
 import providers.MyLoginUsernamePasswordAuthUser;
 import providers.MyUsernamePasswordAuthProvider;
 import providers.MyUsernamePasswordAuthProvider.MyIdentity;
@@ -80,8 +82,8 @@ public class Signup extends Controller {
 		return ok(password_forgot.render(this.userProvider, form));
 	}
 
-	public Result doForgotPassword() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doForgotPassword(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		final Form<MyIdentity> filledForm = FORGOT_PASSWORD_FORM
 				.bindFromRequest();
 		if (filledForm.hasErrors()) {
@@ -98,7 +100,7 @@ public class Signup extends Controller {
 			// up, so just say an email has been sent, even though it might not
 			// be true - that's protecting our user privacy.
 			flash(Application.FLASH_MESSAGE_KEY,
-					this.msg.preferred(request()).at(
+					this.msg.preferred(request).at(
 							"playauthenticate.reset_password.message.instructions_sent",
 							email));
 
@@ -110,7 +112,7 @@ public class Signup extends Controller {
 				final MyUsernamePasswordAuthProvider provider = this.userPaswAuthProvider;
 				// User exists
 				if (user.emailValidated) {
-					provider.sendPasswordResetMailing(user, ctx());
+					provider.sendPasswordResetMailing(user, request);
 					// In case you actually want to let (the unknown person)
 					// know whether a user was found/an email was sent, use,
 					// change the flash message
@@ -121,10 +123,10 @@ public class Signup extends Controller {
 					// up with a fake email via OAuth and get it verified by an
 					// a unsuspecting user that clicks the link.
 					flash(Application.FLASH_MESSAGE_KEY,
-							this.msg.preferred(request()).at("playauthenticate.reset_password.message.email_not_verified"));
+							this.msg.preferred(request).at("playauthenticate.reset_password.message.email_not_verified"));
 
 					// You might want to re-send the verification email here...
-					provider.sendVerifyEmailMailingAfterSignup(user, ctx());
+					provider.sendVerifyEmailMailingAfterSignup(user, request);
 				}
 			}
 
@@ -163,8 +165,8 @@ public class Signup extends Controller {
 		);
 	}
 
-	public Result doResetPassword() {
-		com.feth.play.module.pa.controllers.Authenticate.noCache(response());
+	public Result doResetPassword(Http.Request request, Result result) {
+		com.feth.play.module.pa.controllers.Authenticate.noCache(result);
 		final Form<PasswordReset> filledForm = PASSWORD_RESET_FORM
 				.bindFromRequest();
 		if (filledForm.hasErrors()) {
@@ -186,20 +188,20 @@ public class Signup extends Controller {
 						false);
 			} catch (final RuntimeException re) {
 				flash(Application.FLASH_MESSAGE_KEY,
-						this.msg.preferred(request()).at("playauthenticate.reset_password.message.no_password_account"));
+						this.msg.preferred(request).at("playauthenticate.reset_password.message.no_password_account"));
 			}
 			final boolean login = this.userPaswAuthProvider.isLoginAfterPasswordReset();
 			if (login) {
 				// automatically log in
 				flash(Application.FLASH_MESSAGE_KEY,
-						this.msg.preferred(request()).at("playauthenticate.reset_password.message.success.auto_login"));
+						this.msg.preferred(request).at("playauthenticate.reset_password.message.success.auto_login"));
 
-				return this.auth.loginAndRedirect(ctx(),
+				return this.auth.loginAndRedirect(request,
 						new MyLoginUsernamePasswordAuthUser(u.email));
 			} else {
 				// send the user to the login page
 				flash(Application.FLASH_MESSAGE_KEY,
-						this.msg.preferred(request()).at("playauthenticate.reset_password.message.success.manual_login"));
+						this.msg.preferred(request).at("playauthenticate.reset_password.message.success.manual_login"));
 			}
 			return redirect(routes.Application.login());
 		}

@@ -1,7 +1,7 @@
 package security;
 
 import be.objectify.deadbolt.java.DeadboltHandler;
-import be.objectify.deadbolt.java.ExecutionContextProvider;
+import be.objectify.deadbolt.java.ExecutionHttp.RequestHeaderProvider;
 import be.objectify.deadbolt.java.cache.HandlerCache;
 import com.feth.play.module.pa.PlayAuthenticate;
 
@@ -16,9 +16,9 @@ public class MyHandlerCache implements HandlerCache {
 	private final PlayAuthenticate auth;
 
 	@Inject
-	public MyHandlerCache(final PlayAuthenticate auth, final ExecutionContextProvider execContextProvider) {
+	public MyHandlerCache(final PlayAuthenticate auth, final ExecutionHttp.RequestHeaderProvider execHttp.RequestHeaderProvider) {
 		this.auth = auth;
-		this.defaultHandler = new MyDeadboltHandler(auth, execContextProvider);
+		this.defaultHandler = new MyDeadboltHandler(auth, execHttp.RequestHeaderProvider);
 	}
 
 	@Override

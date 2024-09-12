@@ -22,7 +22,7 @@ import com.feth.play.module.pa.user.AuthUser;
 import org.ietf.jgss.*;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
-import play.mvc.Http.Context;
+import play.mvc.Http;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -75,7 +75,7 @@ public class SpnegoAuthProvider extends WWWAuthenticateProvider {
 	}
 
 	@Override
-	protected String challenge(Context context) {
+	protected String challenge(Http.RequestHeader requestHeader) {
 		return null;
 	}
 

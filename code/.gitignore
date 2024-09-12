@@ -15,3 +15,6 @@ dist
 /bin/
 .cache-main
 .cache-tests
+.bloop
+.bsp
+

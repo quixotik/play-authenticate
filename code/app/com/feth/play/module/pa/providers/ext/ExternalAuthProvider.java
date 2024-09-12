@@ -9,7 +9,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
 import play.inject.ApplicationLifecycle;
 import play.mvc.Call;
-import play.mvc.Http.Request;
+import play.mvc.Http;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,12 +51,12 @@ public abstract class ExternalAuthProvider extends AuthProvider {
         return secure != null ? secure : false;
 	}
 
-	protected String getRedirectUrl(final Request request,
+	protected String getRedirectUrl(final Http.RequestHeader requestHeader,
 			final List<? extends NameValuePair> params) throws ResolverMissingException {
-		return generateURI(getRedirectUrl(request), params);
+		return generateURI(getRedirectUrl(requestHeader), params);
 	}
 
-	protected String getRedirectUrl(final Request request) throws ResolverMissingException {
+	protected String getRedirectUrl(final Http.RequestHeader requestHeader) throws ResolverMissingException {
 		final boolean isHttps = useSecureRedirectUri();
         final Resolver resolver = this.auth.getResolver();
         if (resolver == null) {
@@ -70,7 +70,7 @@ public abstract class ExternalAuthProvider extends AuthProvider {
             return "http" + (isHttps ? "s" : "") + "://" + overrideHost
 					+ c.url();
 		} else {
-			return c.absoluteURL(request, isHttps);
+			return c.absoluteURL(isHttps, requestHeader.host());
 		}
 	}
 

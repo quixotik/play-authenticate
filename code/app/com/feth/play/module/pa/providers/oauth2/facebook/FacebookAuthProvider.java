@@ -13,7 +13,7 @@ import play.i18n.MessagesApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
-import play.mvc.Http.Request;
+import play.mvc.Http;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -94,8 +94,8 @@ public class FacebookAuthProvider extends
 
     @Override
     protected List<NameValuePair> getAuthParams(final Config c,
-                                                final Request request, final String state) throws AuthException {
-        final List<NameValuePair> params = super.getAuthParams(c, request, state);
+                                                final Http.RequestHeader requestHeader, final String state) throws AuthException {
+        final List<NameValuePair> params = super.getAuthParams(c, requestHeader, state);
 
         if (c.hasPath(SettingKeys.DISPLAY)) {
             params.add(new BasicNameValuePair(FacebookConstants.DISPLAY, c

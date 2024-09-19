@@ -1,9 +1,14 @@
 organization := "com.github.quixotik"
 
 name := "play-authenticate"
-version := "3.0.5"
 
 javacOptions ++= Seq("-Werror")
+
+scalacOptions ++= Seq("" +
+  "-unchecked",
+  "-feature",
+  "-deprecation",
+  "-encoding", "UTF-8")
 
 crossScalaVersions := Seq("2.13.14", "3.3.1")
 scalaVersion := crossScalaVersions.value.head
@@ -21,7 +26,7 @@ libraryDependencies ++= Seq(
   guice
 )
 
-// add resolver for easymail snapshots
+// add resolver for local artifacts
 resolvers += Resolver.file("local-ivy", new File(Path.userHome.absolutePath + "/.ivy2/local"))(Resolver.ivyStylePatterns)
 
 lazy val playAuthenticate = (project in file(".")).enablePlugins(PlayJava)

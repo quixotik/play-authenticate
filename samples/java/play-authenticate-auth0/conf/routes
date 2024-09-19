@@ -1,0 +1,8 @@
+# Routes
+
+GET     /                           controllers.Application.index(request: Request)
+GET     /restricted                 controllers.Restricted.index(request: Request)
+
+GET     /logout                     com.feth.play.module.pa.controllers.Authenticate.logout(request: Request)
+GET     /authenticate/:provider     com.feth.play.module.pa.controllers.Authenticate.authenticate(request: Request, provider: String)
+GET     /authenticate/:provider/denied     controllers.Application.oAuthDenied(provider: String)

@@ -15,6 +15,7 @@ import play.inject.ApplicationLifecycle;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
+import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 
@@ -236,16 +237,18 @@ public abstract class OAuth2AuthProvider<U extends AuthUserIdentity, I extends O
 		}
 	}
 
-    private String generateRedirectUrl(Http.RequestHeader requestHeader) throws AuthException {
+    private Result generateRedirectUrl(Http.Request request) throws AuthException {
         final UUID state = UUID.randomUUID();
-		this.auth.storeInCache(requestHeader.session(), STATE_TOKEN, state);
-        final String url = getAuthUrl(requestHeader, state.toString());
+        final String url = getAuthUrl(request, state.toString());
+		Result result = Controller.redirect(url);
+		result = this.auth.setPlayAuthSessionId(request, result);
+		this.auth.storeInCache(result.session(), STATE_TOKEN, state);
         Logger.debug("generated redirect URL for dialog: " + url);
-        return url;
+		return result;
     }
 
-    protected boolean isCallbackRequest(final Http.RequestHeader requestHeader) {
-		return requestHeader.queryString().containsKey(Constants.CODE);
+    protected boolean isCallbackRequest(final Http.Request request) {
+		return request.queryString().containsKey(Constants.CODE);
 	}
 
 	protected String getErrorParameterKey() {

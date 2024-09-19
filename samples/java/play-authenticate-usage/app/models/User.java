@@ -16,7 +16,7 @@ import models.TokenAction.Type;
 import play.data.format.Formats;
 import play.data.validation.Constraints;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.*;
 
 /**

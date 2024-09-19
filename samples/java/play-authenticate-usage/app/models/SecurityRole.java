@@ -19,8 +19,8 @@ import be.objectify.deadbolt.java.models.Role;
 import io.ebean.Finder;
 import io.ebean.Model;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 /**
  * @author Steve Chaloner (steve@objectify.be)

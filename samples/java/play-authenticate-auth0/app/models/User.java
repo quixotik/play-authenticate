@@ -6,15 +6,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import play.data.validation.Constraints;
 
-import io.ebean.Ebean;
+import io.ebean.DB;
 import io.ebean.ExpressionList;
 import io.ebean.Finder;
 import com.feth.play.module.pa.user.AuthUser;
@@ -78,7 +74,7 @@ public class User extends AppModel {
 
 		// deactivate the merged user that got added to this one
 		otherUser.active = false;
-		Ebean.save(Arrays.asList(new User[] { otherUser, this }));
+		DB.save(Arrays.asList(new User[] { otherUser, this }));
 	}
 
 	public static User create(final AuthUser authUser) {

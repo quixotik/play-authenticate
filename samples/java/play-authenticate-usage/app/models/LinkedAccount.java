@@ -3,9 +3,9 @@ package models;
 import com.feth.play.module.pa.user.AuthUser;
 import io.ebean.Finder;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class LinkedAccount extends AppModel {

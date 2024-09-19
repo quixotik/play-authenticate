@@ -134,4 +134,14 @@ public abstract class AuthProvider {
     public void afterSave(final AuthUser user, final Object identity, final Http.Session session) {
 
     }
+
+
+    /**
+     * This allows for performing custom logout operations.
+     *
+     * @param authUser     the logged on user for authProvider
+     */
+	public void logout(AuthUser authUser) throws AuthException {
+	}	
+
 }

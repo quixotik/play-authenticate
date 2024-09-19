@@ -85,7 +85,7 @@ public class PlayAuthenticate {
 	private static final String LINK_USER_KEY = null;
 
 	public String getOriginalUrl(final Http.RequestHeader requestHeader) {
-		final String originalUrl = requestHeader.session().getOptional(ORIGINAL_URL).orElse(null);
+		final String originalUrl = requestHeader.session().get(ORIGINAL_URL).orElse(null);
 		requestHeader.session().removing(ORIGINAL_URL);
 		return originalUrl;
 	}
@@ -127,13 +127,13 @@ public class PlayAuthenticate {
 	}
 
 	public boolean isLoggedIn(final Http.Session session) {
-		boolean ret = session.getOptional(USER_KEY).isPresent() // user is set
-				&& session.getOptional(PROVIDER_KEY).isPresent(); // provider is set
-		ret &= AuthProvider.Registry.hasProvider(session.getOptional(PROVIDER_KEY).orElse(null)); // this
+		boolean ret = session.get(USER_KEY).isPresent() // user is set
+				&& session.get(PROVIDER_KEY).isPresent(); // provider is set
+		ret &= AuthProvider.Registry.hasProvider(session.get(PROVIDER_KEY).orElse(null)); // this
 																				// provider
 																				// is
 																				// active
-		if (session.getOptional(EXPIRES_KEY).isPresent()) {
+		if (session.get(EXPIRES_KEY).isPresent()) {
 			// expiration is set
 			final long expires = getExpiration(session);
 			if (expires != AuthUser.NO_EXPIRATION) {
@@ -144,21 +144,36 @@ public class PlayAuthenticate {
 		return ret;
 	}
 
-	public Result logout(final Http.Session session) {
-		session.removing(USER_KEY);
-		session.removing(PROVIDER_KEY);
-		session.removing(EXPIRES_KEY);
-
-		// shouldn't be in any more, but just in case lets kill it from the
-		// cookie
-		session.removing(ORIGINAL_URL);
-
-		return Controller.redirect(getUrl(getResolver().afterLogout(),
-				SETTING_KEY_AFTER_LOGOUT_FALLBACK));
+	public Result logout(final Http.Request request)  {
+		Result result = Controller.redirect(getUrl(getResolver().afterLogout(), SETTING_KEY_AFTER_LOGOUT_FALLBACK))
+				.removingFromSession(request, USER_KEY)
+				.removingFromSession(request, PROVIDER_KEY)
+				.removingFromSession(request, EXPIRES_KEY)
+				.removingFromSession(request, ORIGINAL_URL);
+		String provider = request.session().get(PROVIDER_KEY).orElse(null);
+		if (provider == null) return result;
+		AuthProvider authProvider = getProvider(provider);
+		AuthUser authUser = getUser(request);
+		try {
+			authProvider.logout(authUser);
+		} catch (final AuthException e) {
+			final Call c = getResolver().onException(e);
+			if (c != null) {
+				return Controller.redirect(c);
+			} else {
+				final String message = e.getMessage();
+				if (message != null) {
+					return Controller.internalServerError(message);
+				} else {
+					return Controller.internalServerError();
+				}
+			}
+		}
+		return result;
 	}
 
 	public String peekOriginalUrl(final Http.RequestHeader requestHeader) {
-		return requestHeader.session().getOptional(ORIGINAL_URL).orElse(null);
+		return requestHeader.session().get(ORIGINAL_URL).orElse(null);
 	}
 
 	public boolean hasUserService() {
@@ -167,9 +182,9 @@ public class PlayAuthenticate {
 
 	private long getExpiration(final Http.Session session) {
 		long expires;
-		if (session.getOptional(EXPIRES_KEY).isPresent()) {
+		if (session.get(EXPIRES_KEY).isPresent()) {
 			try {
-				expires = Long.parseLong(session.getOptional(EXPIRES_KEY).orElse("0"));
+				expires = Long.parseLong(session.get(EXPIRES_KEY).orElse("0"));
 			} catch (final NumberFormatException nfe) {
 				expires = AuthUser.NO_EXPIRATION;
 			}
@@ -180,8 +195,8 @@ public class PlayAuthenticate {
 	}
 
 	public AuthUser getUser(final Http.Session session) {
-		final String provider = session.getOptional(PROVIDER_KEY).orElse(null);
-		final String id = session.getOptional(USER_KEY).orElse(null);
+		final String provider = session.get(PROVIDER_KEY).orElse(null);
+		final String id = session.get(USER_KEY).orElse(null);
 		final long expires = getExpiration(session);
 
 		if (provider != null && id != null) {
@@ -208,13 +223,13 @@ public class PlayAuthenticate {
 	}
 
 	private String getPlayAuthSessionId(final Http.Session session) {
+		return session.get(SESSION_ID_KEY).orElse(null);
+	}
+
+	public Result setPlayAuthSessionId(final Http.Request request, final Result result) {
 		// Generate a unique id
-		String uuid = session.getOptional(SESSION_ID_KEY).orElse(null);
-		if (uuid == null) {
-			uuid = java.util.UUID.randomUUID().toString();
-			session.adding(SESSION_ID_KEY, uuid);
-		}
-		return uuid;
+		String uuid = java.util.UUID.randomUUID().toString();
+		return result.addingToSession(request, SESSION_ID_KEY, uuid);
 	}
 
 	private void storeUserInCache(final Http.Session session,
@@ -240,9 +255,8 @@ public class PlayAuthenticate {
 		return id + "_" + key;
 	}
 
-    @SuppressWarnings("unchecked")
     public <T> T getFromCache(final Http.Session session, final String key) {
-        return (T) cacheApi.get(getCacheKey(session, key));
+        return (T) cacheApi.get(getCacheKey(session, key)).orElse(null);
 	}
 
 	private AuthUser getUserFromCache(final Http.Session session,
@@ -428,7 +442,7 @@ public class PlayAuthenticate {
 						// if isLoggedIn is false here, then the local user has
 						// been deleted/deactivated
 						// so kill the session
-						logout(session);
+						logout(request);
 						oldUser = null;
 					}
 				}

@@ -3,8 +3,8 @@ package models;
 import be.objectify.deadbolt.java.models.Permission;
 import io.ebean.Finder;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 /**
  * Initial version based on work by Steve Chaloner (steve@objectify.be) for

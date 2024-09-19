@@ -18,6 +18,6 @@ public class AuthenticateDI extends AuthenticateBase {
 	}
 
 	public Result logout(Http.Request request) {
-		return noCache(this.auth.logout(request.session()));
+		return noCache(this.auth.logout(request));
 	}
 }

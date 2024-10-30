@@ -39,6 +39,7 @@ public class Auth0AuthProvider extends OAuth2AuthProvider<Auth0AuthUser, Auth0Au
 		public static final String LOGOUT_URL = "logoutUrl";
 		public static final String USER_INFO_URL = "userInfoUrl";
 		public static final String ORGANIZATION_ID = "organization";
+		public static final String CONNECTION = "connection";
     }
 
     public static abstract class Auth0Constants extends OAuth2AuthProvider.Constants {
@@ -46,6 +47,7 @@ public class Auth0AuthProvider extends OAuth2AuthProvider<Auth0AuthUser, Auth0Au
 		public static final String ID_TOKEN_HINT = "id_token_hint";
 		public static final String NONCE = "nonce";
         public static final String ORGANIZATION_ID = "organization";
+		public static final String CONNECTION = "connection";
     }
 
 	@Inject
@@ -99,6 +101,12 @@ public class Auth0AuthProvider extends OAuth2AuthProvider<Auth0AuthUser, Auth0Au
 			params.add(new BasicNameValuePair(
 				Auth0Constants.ORGANIZATION_ID,
 				organizationId));	
+		}
+		final String connection = c.getString(Auth0SettingKeys.CONNECTION);
+		if (organizationId != null) {
+			params.add(new BasicNameValuePair(
+				Auth0Constants.CONNECTION,
+				connection));
 		}
 		return params;
 	}
